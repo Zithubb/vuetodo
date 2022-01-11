@@ -23,9 +23,8 @@
         </tr>
         <td><input type="hidden" v-model="painting.id"></td>
         <td><input type="text" v-model="painting.title"></td>
-        <td><input type="nunmber" v-model="painting.year"></td>
+        <td><input type="number" v-model="painting.year"></td>
         <td><input type="checkbox" v-model="painting.on_display"></td>
-        <td>
         <td>
           <button v-if="mod_new" @click="newPainting()" :disabled="saving">Létrehoz</button>
           <button v-if="!mod_new"  @click="savePainting()" :disabled="saving">Mentés</button>
@@ -33,7 +32,7 @@
         </td>
       </tbody>
     </table>
-    <button @click="loadData">Adatok betöltése</button>
+    <button @click="loadData">Frissítés</button>
   </div>
 </template>
 
@@ -82,6 +81,7 @@ export default {
       })
       await this.loadData()
       this.saving=false
+      this.resetForm()
    },
    async savePainting(){
      this.saving='disabled'
@@ -95,6 +95,7 @@ export default {
       })
       await this.loadData()
       this.saving=false
+      this.resetForm()
    },
   async editPainting(id){
      let Response=await fetch(`http://127.0.0.1:8000/api/paintings/${id}`)
@@ -104,8 +105,21 @@ export default {
      
    },
    cancelEdit(){
-     this.mod_new=true
+      this.resetForm()
+   },
+   resetForm(){
+     this.painting={
+        id:null,
+        title:'',
+        year:'',
+        on_display:false
+      }
+      this.mod_new=true
+
    }
+  },
+  mounted(){
+    this.loadData()
   }
 }
 </script>
