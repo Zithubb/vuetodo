@@ -1,43 +1,111 @@
 <template>
   <div id="app">
-    <Todo :todos="todos" @todo-item-changed="Changed"/>
+    <table>
+      <thead>
+        <tr>
+        <th>Azonosító</th>
+        <th>Cím</th>
+        <th>Év</th>
+        <th>Kiállítva</th>
+        <th>Műveletek</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="painting in paintings" v-bind:key="painting.id">
+        <td>{{ painting.id }}</td>
+        <td>{{ painting.title }}</td>
+        <td>{{ painting.year }}</td>
+        <td>{{ painting.on_display }}</td>
+        <td>
+          <button @click="deletePainting(painting.id)">Törlés</button>
+          <button @click="editPainting(painting.id)">Szerkeztés</button>
+        </td>
+        </tr>
+        <td><input type="hidden" v-model="painting.id"></td>
+        <td><input type="text" v-model="painting.title"></td>
+        <td><input type="nunmber" v-model="painting.year"></td>
+        <td><input type="checkbox" v-model="painting.on_display"></td>
+        <td>
+        <td>
+          <button v-if="mod_new" @click="newPainting()" :disabled="saving">Létrehoz</button>
+          <button v-if="!mod_new"  @click="savePainting()" :disabled="saving">Mentés</button>
+          <button  v-if="!mod_new" @click="cancelEdit()" :disabled="saving">Mégse</button>
+        </td>
+      </tbody>
+    </table>
+    <button @click="loadData">Adatok betöltése</button>
   </div>
 </template>
 
 <script>
-import Todo from './components/Todo.vue'
-
 export default {
   name: 'App',
   components: {
-    Todo
   },
   data() {
     return {
-      todos: [
-        {
-          title: 'Első teendő',
-          valami: 'valami'
-        },
-        {
-          title: 'Második teendő'
-        },
-        {
-          title: 'Harmadik teendő'
-        },
-        ]
+      mod_new:true,
+      saving:false,
+      painting:{
+        id:null,
+        title:'',
+        year:'',
+        on_display:false
+      },
+      paintings:[]
     }
   },
-  methods: {
-    Changed(e) {
-      this.todos.map(function (todo) {
-        if (todo.title != e.original.title) {
-          return todo
-        }
-        todo.title = e.new.title
-        return todo
+  methods:{
+   async loadData(){
+    
+      let Response = await fetch('http://127.0.0.1:8000/api/paintings')
+      let data = await Response.json()
+      console.log(data)
+      this.paintings = data
+   } ,
+  async deletePainting(id){
+     let Response=await fetch(`http://127.0.0.1:8000/api/paintings/${id}`,{
+       method:'DELETE'
+     })
+     console.log(Response)
+     await this.loadData()
+   },
+   async newPainting(){
+     this.saving='disabled'
+      await fetch('http://127.0.0.1:8000/api/paintings',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(this.painting)
       })
-    }
+      await this.loadData()
+      this.saving=false
+   },
+   async savePainting(){
+     this.saving='disabled'
+      await fetch(`http://127.0.0.1:8000/api/paintings/${this.painting.id}`,{
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(this.painting)
+      })
+      await this.loadData()
+      this.saving=false
+   },
+  async editPainting(id){
+     let Response=await fetch(`http://127.0.0.1:8000/api/paintings/${id}`)
+      let data = await Response.json()
+      this.painting={...data};
+      this.mod_new=false
+     
+   },
+   cancelEdit(){
+     this.mod_new=true
+   }
   }
 }
 </script>
